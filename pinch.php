@@ -22,11 +22,11 @@ class Pinch {
 	}
 
 	function msg( $msg, $recepient = false ) {
-		echo ColorCLI::light_red("MSG --> ") . "{$msg}\n";
+		echo ColorCLI::purple("MSG --> ") . "{$msg}\n";
 		$lines = explode( PHP_EOL, $msg );
 		foreach( $lines as $line ) {
 			$line = trim($line);
-			if( $line[0] != '(' ) {
+			if( $line && $line[0] != '(' ) {
 				$this->send( 'PRIVMSG ' . $recepient . ' :' . $line );	
 			}
 		}
@@ -47,12 +47,25 @@ class Pinch {
 			switch( true ){
 				//keep alive
 				case( preg_match("|^PING :(.*)$|i", $input, $matches ) ):
-					echo ColorCLI::dark_gray("[ SERVER PING {$matches[1]} ]\n");
+					echo ColorCLI::gray("[ SERVER PING {$matches[1]} ]\n");
 					$this->send("PONG :{$matches[1]}" );
 				break;
 				//messages with recipients
 				case( preg_match("|^:(?P<from>.+?)!.* (?P<cmd>[A-Z]*) (?P<to>.+?) :(?P<msg>.*)$|i", $input, $matches ) ):
 					echo ColorCLI::cyan(sprintf( "%-12s%s -> %s: %s\n", $matches["cmd"], $matches["from"], $matches["to"], $matches["msg"] ));
+
+					if( $matches["to"][0] == '#' ) {
+						$matches['reply'] == $matches["to"];
+					}else{
+						$matches['reply'] == $matches["from"];
+					}
+
+					foreach( $this->events as $event ) {
+						if( preg_match($event['match'], $input, $lmatches) ) {
+							$event['lambda']( $this, $lmatches, $matches );
+						}
+					}
+
 				break;
 				//messages without recipients
 				case( preg_match("|^:(?P<from>.+?)!.* (?P<cmd>[A-Z]*) :(?P<msg>.*)$|i", $input, $matches ) ):
@@ -62,12 +75,6 @@ class Pinch {
 				default:
 					echo $input, "\n";
 				break;
-			}
-
-			foreach( $this->events as $event ) {
-				if( preg_match($event['match'], $input, $matches) ) {
-					$event['lambda']( $matches, $this );
-				}
 			}
 
 		}
