@@ -47,7 +47,7 @@ class Pinch {
 			switch( true ){
 				//keep alive
 				case( preg_match("|^PING :(.*)$|i", $input, $matches ) ):
-					echo ColorCLI::gray("[ SERVER PING {$matches[1]} ]\n");
+					echo ColorCLI::light_gray("[ SERVER PING {$matches[1]} ]\n");
 					$this->send("PONG :{$matches[1]}" );
 				break;
 				//messages with recipients
@@ -55,9 +55,9 @@ class Pinch {
 					echo ColorCLI::cyan(sprintf( "%-12s%s -> %s: %s\n", $matches["cmd"], $matches["from"], $matches["to"], $matches["msg"] ));
 
 					if( $matches["to"][0] == '#' ) {
-						$matches['reply'] == $matches["to"];
+						$matches['reply'] = $matches["to"];
 					}else{
-						$matches['reply'] == $matches["from"];
+						$matches['reply'] = $matches["from"];
 					}
 
 					foreach( $this->events as $event ) {
