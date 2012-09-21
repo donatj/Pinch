@@ -40,8 +40,16 @@ class Pinch {
 		}
 		$this->send("USER username hostname servername :real name" );
 		$this->send("NICK " . $this->user    );
-		$this->send("JOIN " . $this->channel );
 
+		while ( $input = trim( fgets( $this->conn ) ) ) {
+			stream_set_timeout( $this->conn, 3600 );
+			echo $input, "\n";
+			if( preg_match("|^PING :(.*)$|i", $input, $matches ) ) {
+				$this->send("PONG :{$matches[1]}" );
+				$this->send("JOIN " . $this->channel );
+				break;
+			}
+		}
 		while ( $input = trim( fgets( $this->conn ) ) ) {
 			stream_set_timeout( $this->conn, 3600 );
 			switch( true ){
