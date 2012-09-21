@@ -16,11 +16,13 @@ $pinch = new Pinch(
 	$config['server']['password']
 );
 
+/*
 $pinch->on('/:test ([a-z0-9 ]+)/i', function($obj, $msg, $info){
 	$obj->msg( $msg[1], $info['reply'] );
 });
+*/
 
-$pinch->on('/\b(https?):\/\/[A-Z][-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]/i', function($obj, $msg, $info){
+$pinch->onmsg('/\b(https?):\/\/[A-Z][-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]/i', function($obj, $msg, $info){
 	$page = file_get_contents( $msg[0] );
 	$page = preg_replace('%<(script|style|noscript|title|textarea|th|head)[^>]*>(.*?)</\1>%s', ' ', $page);
 
@@ -42,7 +44,8 @@ $pinch->on('/\b(https?):\/\/[A-Z][-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$
 	$obj->msg( 'Summary: ' . substr($page, 0, 500), $info['reply'] );
 });
 
-$pinch->on('/(\?|Do|Did|Is|Are|What|Where|Who|Why|When|How)( |\?)(.*)\?/i', function($obj, $msg, $info){
+
+$pinch->onmsg('/(\?|Do|Did|Is|Are|What|Where|Who|Why|When|How)( |\?)(.*)\?/i', function($obj, $msg, $info){
 	global $config;
 
 	$search = urlencode( trim($msg[0],'? ') );
