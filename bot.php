@@ -66,13 +66,15 @@ $pinch->onmsg('/(\?|Do|Did|Is|Are|What|Where|Who|Why|When|How)( |\?)(.*)\?/i', f
 
 });
 
-$pinch->on('/ (fake|false|lie|artifical)[. ]/i', function($obj, $msg, $info){
+/*
+$pinch->on('/\b(fake|false|lie|artifical)/i', function($obj, $msg, $info){
 	$data = json_decode( file_get_contents('http://twitter.com/status/user_timeline/fakehenrymoy.json?count=100'), true );
 	$msg  = $data[array_rand($data)]['text'];
 	$msg  = str_replace('"', ' ', $msg);
 	$msg  = trim($msg);
 	$obj->msg($msg, $info['reply']);
 });
+*/
 
 
 
