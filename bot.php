@@ -42,9 +42,11 @@ $pinch->on('/\b(https?):\/\/[A-Z][-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$
 	$obj->msg( 'Summary: ' . substr($page, 0, 500), $info['reply'] );
 });
 
-$pinch->on('/(\?\?|Do|Did|Is|Are|What|Where|Who|Why|When|How) (.*)\?/i', function($obj, $msg, $info){
+$pinch->on('/(\?|Do|Did|Is|Are|What|Where|Who|Why|When|How)( |\?)(.*)\?/i', function($obj, $msg, $info){
+	global $config;
 
-	$search = urlencode($msg[0]);
+	$search = urlencode( trim($msg[0],'? ') );
+	
 	$url = 'http://api.wolframalpha.com/v2/query?input='.$search.'&format=plaintext&appid=' . $config['wolfram']['apikey'];
 	echo PHP_EOL . $url . PHP_EOL;
 	$data = file_get_contents($url);
