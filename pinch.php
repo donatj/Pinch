@@ -4,9 +4,11 @@ class Pinch {
 
 	var $conn;
 
+	const OUTPUT_ROWS = 15;
+
 	var $user, $channel, $server, $password, $port;
 
-	private $events = array();
+	private $events = array('on'=>array(), 'msg' => array());
 
 	function __construct( $server, $user, $channel, $password = false, $port = 6667 ) {
 		$this->server   = $server;
@@ -16,8 +18,13 @@ class Pinch {
 		$this->port     = $port;
 	}
 
+	function cols() {
+		return intval(`tput cols`);
+	}
+
 	function send( $msg ){
 		echo ColorCLI::red("CMD --> ") . "{$msg}\n";
+		$this->statusbar($msg, true);
 		return fwrite( $this->conn, $msg . "\n" );
 	}
 
@@ -32,7 +39,32 @@ class Pinch {
 		}
 	}
 
+	private function statusbar($str, $in = false) {
+		static $lines = false;
+		if( !$lines ) { $lines = array_fill(0, self::OUTPUT_ROWS, array('str' => '','in' => '') ); }
+		$lines[] = array( 'str' => $str, 'in' => $in );
+		array_shift($lines);
+
+		echo "\0337\033[1;1f\033[2K";
+		foreach($lines as $line) {
+			$text = str_pad(substr(  ($line['in'] ? ' <  ' : ' >  ') . $line['str'], 0, $this->cols() ), $this->cols());
+			if( $line['in'] ) {
+				echo ColorCLI::red($text, 'light_gray');
+			}else{
+				echo ColorCLI::black($text, 'light_gray');
+			}
+		}
+
+		echo str_repeat('─', $this->cols());
+		
+		echo "\0338";
+	}
+
 	function connect() {
+
+		echo "\033[2J\033[1;1f"; //clear screen
+		echo str_repeat(PHP_EOL, self::OUTPUT_ROWS + 2);
+
 		$this->conn = fsockopen( $this->server, $this->port, $errno, $errstr );
 
 		if( $this->password ) {
@@ -43,15 +75,19 @@ class Pinch {
 
 		while ( $input = trim( fgets( $this->conn ) ) ) {
 			stream_set_timeout( $this->conn, 3600 );
-			echo $input, "\n";
+			
 			if( preg_match("|^PING :(.*)$|i", $input, $matches ) ) {
 				$this->send("PONG :{$matches[1]}" );
 				$this->send("JOIN " . $this->channel );
 				break;
 			}
+
+			$this->statusbar($input);
 		}
+		
 		while ( $input = trim( fgets( $this->conn ) ) ) {
 			stream_set_timeout( $this->conn, 3600 );
+			
 			switch( true ){
 				//keep alive
 				case( preg_match("|^PING :(.*)$|i", $input, $matches ) ):
@@ -60,16 +96,18 @@ class Pinch {
 				break;
 				//messages with recipients
 				case( preg_match("|^:(?P<from>.+?)!.* (?P<cmd>[A-Z]*) (?P<to>.+?) :(?P<msg>.*)$|i", $input, $matches ) ):
-					echo ColorCLI::cyan(sprintf( "%-12s%s -> %s: %s\n", $matches["cmd"], $matches["from"], $matches["to"], $matches["msg"] ));
+					$text = sprintf( "%-12s%s -> %s: %s\n", $matches["cmd"], $matches["from"], $matches["to"], $matches["msg"] );
 
 					if( $matches["to"][0] == '#' ) {
 						$matches['reply'] = $matches["to"];
+						echo ColorCLI::cyan($text);
 					}else{
 						$matches['reply'] = $matches["from"];
+						echo ColorCLI::light_cyan($text);
 					}
 
-					foreach( $this->events as $event ) {
-						if( preg_match($event['match'], $input, $lmatches) ) {
+					foreach( $this->events['msg'] as $event ) {
+						if( preg_match($event['match'], $event['justmsg'] ? $matches["msg"] : $input, $lmatches) ) {
 							$event['lambda']( $this, $lmatches, $matches );
 						}
 					}
@@ -77,19 +115,31 @@ class Pinch {
 				break;
 				//messages without recipients
 				case( preg_match("|^:(?P<from>.+?)!.* (?P<cmd>[A-Z]*) :(?P<msg>.*)$|i", $input, $matches ) ):
-					echo ColorCLI::light_cyan(sprintf( "%-12s%s <- %s\n", $matches["cmd"], $matches["msg"], $matches["from"] ));
+					echo ColorCLI::blue(sprintf( "%-12s%s <- %s\n", $matches["cmd"], $matches["msg"], $matches["from"] ));
 				break;
 				//kick everything else out to our shell
 				default:
-					echo $input, "\n";
+					foreach( $this->events['on'] as $event ) {
+						if( preg_match($event['match'], $event['justmsg'] ? $matches["msg"] : $input, $lmatches) ) {
+							$event['lambda']( $this, $lmatches );
+						}
+					}
 				break;
 			}
+
+			$this->statusbar($input);
+		}
+	}
 
 		}
 	}
 
-	function on($regex, $lambda) {
-		$this->events[] = array('match' => $regex, 'lambda' => $lambda);
+	public function on($regex, $lambda) {
+		$this->events['on'][]  = array('match' => $regex, 'lambda' => $lambda);
+	}
+
+	public function onmsg($regex, $lambda, $justmsg = true) {
+		$this->events['msg'][] = array('match' => $regex, 'lambda' => $lambda, 'justmsg' => $justmsg);
 	}
 
 }
