@@ -1,5 +1,7 @@
 <?php
 
+namespace donatj;
+
 class Pinch {
 
 	var $conn;
@@ -128,9 +130,6 @@ class Pinch {
 			}
 
 			$this->statusbar($input);
-		}
-	}
-
 		}
 	}
 

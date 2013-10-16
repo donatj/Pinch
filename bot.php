@@ -1,13 +1,17 @@
 #!/usr/bin/php -q
 <?php
 
+require('vendor/autoload.php');
+
+use donatj\Pinch;
+
 if( is_file('local/config.ini') ) {
 	$config = parse_ini_file('local/config.ini', true);
 }else{
 	$config = parse_ini_file('config.ini', true);
 }
 
-include('pinch.php');
+
 
 $pinch = new Pinch(
 	$config['server']['path'], 

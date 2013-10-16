@@ -1,0 +1,23 @@
+{
+	"name": "donatj/pinch",
+	"description": "Event based IRC protocol wrapper",
+	"require": {
+		"donatj/cli-toolkit": "*",
+		"donatj/flags": "*"
+	},
+	"require-dev": {
+		"donatj/drop": "*"
+	},
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Jesse Donat",
+			"email": "donatj@gmail.com"
+		}
+	],
+	"autoload": {
+		"psr-0": {
+			"donatj": "src/"
+		}
+	}
+}
